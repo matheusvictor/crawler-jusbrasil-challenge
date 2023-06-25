@@ -9,6 +9,14 @@ from utils import save_json_file
 URL: str = 'https://storage.googleapis.com/jus-challenges/challenge-crawler.html'
 
 
+def remove_whitespace_and_line_breaks_from_text(text):
+    return re.sub(pattern=r'\s+', repl=' ', string=text.strip())
+
+
+def remove_label_from_text(text, label):
+    return text.replace(label, '')
+
+
 def extract_process_number_from_jurisprudence_raw_data(raw_data):
     return raw_data.find_next('a').text.strip()
 
@@ -18,15 +26,15 @@ def extract_subject_from_jurisprudence_raw_data(raw_data):
 
 
 def extract_summary_from_jurisprudence_raw_data(raw_data):
+    # TODO: Realizar tratamentos (ex.: remoção da label 'Ementa:', encode, remover caracteres especiais como \n)
+    # TODO: Limpar final da ementa (remover espaços ou caracteres especiais como - e colocar ponto final)
     rows = raw_data.find_all('tr')
+    regex = re.compile(r'Ementa:\s+')
 
     for element in rows:
-        regex = re.compile(r'Ementa:\s+')
         if regex.search(element.text.strip()):
             summary_div = element.find('div')
-            summary = summary_div.text.strip()
-            # TODO: Realizar tratamentos (ex.: remoção da label 'Ementa:', encode, remover caracteres especiais como \n)
-            return summary
+            return remove_whitespace_and_line_breaks_from_text(summary_div.text).replace('Ementa: ', '')
 
 
 def extract_reporter_from_jurisprudence_raw_data(raw_data):
