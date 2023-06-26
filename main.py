@@ -36,19 +36,6 @@ def extract_process_number_from_jurisprudence_raw_data(raw_data):
     return raw_data.find_next('a').text.strip()
 
 
-def extract_summary_from_jurisprudence_raw_data(raw_data):
-    # TODO: Realizar tratamentos (ex.: remoção da label 'Ementa:', encode, remover caracteres especiais como \n)
-    # TODO: Limpar final da ementa (remover espaços ou caracteres especiais como - e colocar ponto final)
-    rows = raw_data.find_all('tr')
-    regex = re.compile(r'Ementa:\s+')
-
-    for element in rows:
-        if regex.search(element.text.strip()):
-            summary_div = element.find('div')
-            summary = remove_label_from_text(text=summary_div.text, regex_pattern=regex)
-            return remove_duplicated_space_and_line_breaks_from_text(summary)
-
-
 def main():
     try:
         html = urlopen(URL)
@@ -100,7 +87,10 @@ def main():
 
             jurisprudence_list.append(jurisprudence)
 
-        save_json_file(data=jurisprudence_list, file_name='result')
+        try:
+            save_json_file(data=jurisprudence_list, file_name='result')
+        except Exception as e:
+            print(e)
 
 
 if __name__ == '__main__':
