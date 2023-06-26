@@ -24,7 +24,7 @@ def extract_date_from_text(text):
 
 def extract_data_information_from_jurisprudence_raw_data(raw_data, regex_pattern):
     rows = raw_data.find_all('tr')
-    regex = re.compile(r'{0}'.format(regex_pattern))
+    regex = re.compile(regex_pattern)
 
     for element in rows:
         if regex.search(element.text.strip()):
@@ -34,10 +34,6 @@ def extract_data_information_from_jurisprudence_raw_data(raw_data, regex_pattern
 
 def extract_process_number_from_jurisprudence_raw_data(raw_data):
     return raw_data.find_next('a').text.strip()
-
-
-def extract_subject_from_jurisprudence_raw_data(raw_data):
-    pass
 
 
 def extract_summary_from_jurisprudence_raw_data(raw_data):
@@ -53,33 +49,13 @@ def extract_summary_from_jurisprudence_raw_data(raw_data):
             return remove_duplicated_space_and_line_breaks_from_text(summary)
 
 
-def extract_reporter_from_jurisprudence_raw_data(raw_data):
-    pass
-
-
-def extract_county_from_jurisprudence_raw_data(raw_data):
-    pass
-
-
-def extract_judging_from_jurisprudence_raw_data(raw_data):
-    pass
-
-
-def extract_judgment_date_from_jurisprudence_raw_data(raw_data):
-    pass
-
-
-def extract_publish_date_from_jurisprudence_raw_data(raw_data):
-    pass
-
-
 def main():
     try:
         html = urlopen(URL)
     except HTTPError as e:
         print(e)
-    except URLError as e:
-        print('This server could not be found!')
+    except URLError:
+        print(f'This server could not be found!')
     else:
         bs = BeautifulSoup(html.read(), 'html.parser')
 
@@ -89,25 +65,38 @@ def main():
 
         jurisprudence_list = list()
         for index, jurisprudence_raw_data in enumerate(section_information_tables):
-            # TODO: Corrigir extração do compo Relator(a)
-            jurisprudence = {
-                "id": (index + 1),
-                "numeroProcesso": extract_process_number_from_jurisprudence_raw_data(jurisprudence_raw_data),
-                "assunto": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                                regex_pattern='Classe/Assunto:\s+'),
-                "ementa": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                               regex_pattern='Ementa:\s+'),
-                "relator": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                                regex_pattern='Relator(a):\s+'),
-                "comarca": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                                regex_pattern='Comarca:\s+'),
-                "orgaoJulgador": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                                      regex_pattern='Órgão julgador:\s+'),
-                "dataJulgamento": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                                       regex_pattern='Data do julgamento:\s+'),
-                "dataPublicacao": extract_data_information_from_jurisprudence_raw_data(raw_data=jurisprudence_raw_data,
-                                                                                       regex_pattern='Data de publicação:\s+'),
-            }
+            jurisprudence = dict(
+                _id=extract_process_number_from_jurisprudence_raw_data(jurisprudence_raw_data),
+                numeroProcesso=extract_process_number_from_jurisprudence_raw_data(jurisprudence_raw_data),
+                assunto=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Classe\/Assunto:\s+'
+                ),
+                ementa=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Ementa:\s*'
+                ),
+                relator=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Relator\(\w\):\s*'
+                ),
+                comarca=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Comarca:\s*'
+                ),
+                orgaoJulgador=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Órgão\sjulgador:\s*'
+                ),
+                dataJulgamento=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Data\sdo\sjulgamento:\s*'
+                ),
+                dataPublicacao=extract_data_information_from_jurisprudence_raw_data(
+                    raw_data=jurisprudence_raw_data,
+                    regex_pattern=r'Data\sde\spublicação:\s*'
+                ),
+            )
 
             jurisprudence_list.append(jurisprudence)
 
