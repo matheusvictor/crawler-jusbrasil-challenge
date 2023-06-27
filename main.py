@@ -4,7 +4,7 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
-from utils import save_json_file
+from utils import save_json_file, valid_date_format
 
 URL: str = 'https://storage.googleapis.com/jus-challenges/challenge-crawler.html'
 
@@ -52,37 +52,55 @@ def main():
 
         jurisprudence_list = list()
         for index, jurisprudence_raw_data in enumerate(section_information_tables):
+            rows = jurisprudence_raw_data.find_all('tr')
+
+            process_number = None
+            subject = None
+            summary = None
+            reporter = None
+            publish_date = None
+            county = None
+            judging_agent = None
+            judging_date = None
+
+            for line in rows:
+
+                if re.compile(r'Classe\/Assunto:\s+').search(line.text.strip()):
+                    subject = remove_label_from_text(text=line.text, regex_pattern=r'Classe\/Assunto:\s+')
+                    subject = remove_duplicated_space_and_line_breaks_from_text(subject)
+                elif re.compile(r'Ementa:\s*').search(line.text.strip()):
+                    summary = remove_label_from_text(text=line.text, regex_pattern=r'Ementa:\s*')
+                    summary = remove_duplicated_space_and_line_breaks_from_text(summary)
+                elif re.compile(r'Relator\(\w\):\s*').search(line.text.strip()):
+                    reporter = remove_label_from_text(text=line.text, regex_pattern=r'Relator\(\w\):\s*')
+                    reporter = remove_duplicated_space_and_line_breaks_from_text(reporter)
+                elif re.compile(r'Comarca:\s*').search(line.text.strip()):
+                    county = remove_label_from_text(text=line.text, regex_pattern=r'Comarca:\s*')
+                    county = remove_duplicated_space_and_line_breaks_from_text(county)
+                elif re.compile(r'Órgão\sjulgador:\s*').search(line.text.strip()):
+                    judging_agent = remove_label_from_text(text=line.text, regex_pattern=r'Órgão\sjulgador:\s*')
+                    judging_agent = remove_duplicated_space_and_line_breaks_from_text(judging_agent)
+                elif re.compile(r'Data\sdo\sjulgamento:\s*').search(line.text.strip()):
+                    judging_date = remove_label_from_text(text=line.text, regex_pattern=r'Data\sdo\sjulgamento:\s*')
+                    judging_date = remove_duplicated_space_and_line_breaks_from_text(judging_date)
+                elif re.compile(r'Data\sde\spublicação:\s*').search(line.text.strip()):
+                    publish_date = remove_label_from_text(text=line.text, regex_pattern=r'Data\sde\spublicação:\s*')
+                    publish_date = remove_duplicated_space_and_line_breaks_from_text(publish_date)
+                else:
+                    process_number = extract_process_number_from_jurisprudence_raw_data(jurisprudence_raw_data)
+
             jurisprudence = dict(
-                _id=extract_process_number_from_jurisprudence_raw_data(jurisprudence_raw_data),
-                numeroProcesso=extract_process_number_from_jurisprudence_raw_data(jurisprudence_raw_data),
-                assunto=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Classe\/Assunto:\s+'
-                ),
-                ementa=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Ementa:\s*'
-                ),
-                relator=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Relator\(\w\):\s*'
-                ),
-                comarca=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Comarca:\s*'
-                ),
-                orgaoJulgador=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Órgão\sjulgador:\s*'
-                ),
-                dataJulgamento=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Data\sdo\sjulgamento:\s*'
-                ),
-                dataPublicacao=extract_data_information_from_jurisprudence_raw_data(
-                    raw_data=jurisprudence_raw_data,
-                    regex_pattern=r'Data\sde\spublicação:\s*'
-                ),
+                _id=(index + 1),
+                numeroProcesso=process_number,
+                assunto=subject,
+                ementa=summary,
+                relator=reporter,
+                comarca=county,
+                orgaoJulgador=judging_agent,
+                dataJulgamento=judging_date,
+                dataPublicacao=publish_date,
+                _dataJulgamentoValida=valid_date_format(judging_date),
+                _dataPublicacaoValida=valid_date_format(publish_date)
             )
 
             jurisprudence_list.append(jurisprudence)
