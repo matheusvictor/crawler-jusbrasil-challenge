@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 
 def save_json_file(data, file_name: str):
@@ -14,3 +15,11 @@ def save_json_file(data, file_name: str):
     with open(path, "w", encoding='utf8') as outfile:
         outfile.write(json_object)
         outfile.close()
+
+
+def valid_date_format(string):
+    try:
+        datetime.strptime(string, '%d/%m/%Y')
+        return True
+    except ValueError:
+        return False
