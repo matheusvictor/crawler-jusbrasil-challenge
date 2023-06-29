@@ -17,7 +17,7 @@ def save_json_file(data, file_name: str):
         outfile.close()
 
 
-def valid_date_format(string):
+def is_date_format_valid(string):
     try:
         datetime.strptime(string, '%d/%m/%Y')
         return True
